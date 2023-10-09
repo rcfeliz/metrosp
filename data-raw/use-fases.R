@@ -2,17 +2,17 @@
 
 load("data/contratos.rda")
 
-path = "data-raw/html/processos"
+path = "data-raw/html/fases"
 
 contratos |>
   dplyr::pull(id_processo) |>
-  purrr::map(processos_download, path = path)
+  purrr::map(fases_download, path = path)
 
 # parse -------------------------------------------------------------------
 
-processos <- fs::dir_ls("data-raw/html/processos/") |>
-  purrr::map_dfr(processos_parse)
+fases <- fs::dir_ls("data-raw/html/fases/") |>
+  purrr::map_dfr(fases_parse)
 
 fs::dir_delete(path)
 
-usethis::use_data(processos, overwrite = TRUE)
+usethis::use_data(fases, overwrite = TRUE)

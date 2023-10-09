@@ -1,4 +1,4 @@
-processos_download <- function(path = "data-raw/html/processos", id) {
+fases_download <- function(path = "data-raw/html/fases", id) {
   load("data/contratos.rda")
 
   url <- contratos |>
@@ -14,7 +14,7 @@ processos_download <- function(path = "data-raw/html/processos", id) {
   file
 }
 
-processos_parse <- function(file) {
+fases_parse <- function(file) {
 
   id_processo <- stringr::str_extract(file, "[0-9]+")
 
