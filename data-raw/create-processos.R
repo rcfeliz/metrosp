@@ -96,9 +96,6 @@ aux_valores <- tibble::tibble(
     purrr::map(~purrr::keep(.x, stringr::str_detect(.x, "\\d{1,3}\\.\\d{3},\\d{2}"))) |>
     purrr::map(~purrr::keep(.x, stringr::str_detect(.x, "total"))) |>
     purrr::map(~stringr::str_extract(.x, rgx_reais)) |>
-    purrr::map(~stringr::str_remove_all(.x, "\\.")) |>
-    purrr::map(~stringr::str_replace(.x, "\\,", ".")) |>
-    purrr::map(~as.numeric(.x)) |>
     unlist(),
   valor_mensal = fs::dir_ls(path_valor) |>
     purrr::map(pdftools::pdf_text) |>
@@ -107,11 +104,7 @@ aux_valores <- tibble::tibble(
     purrr::map(~purrr::keep(.x, stringr::str_detect(.x, "\\d{1,3}\\.\\d{3},\\d{2}"))) |>
     purrr::map(~purrr::keep(.x, stringr::str_detect(.x, "mensal"))) |>
     purrr::map(~stringr::str_extract(.x, rgx_reais)) |>
-    purrr::map(~stringr::str_remove_all(.x, "\\.")) |>
-    purrr::map(~stringr::str_replace(.x, "\\,", ".")) |>
-    purrr::map(~as.numeric(.x)) |>
     unlist()
-
 )
 
 # processos ---------------------------------------------------------------
@@ -124,5 +117,15 @@ processos <- list(
 ) |>
   purrr::reduce(dplyr::left_join, by = "id_processo") |>
   dplyr::select(id_processo, estacao, dt_inicio, status, valor_total, valor_mensal, fases)
+
+processos |>
+  dplyr::select(dplyr::contains("valor")) |>
+  dplyr::filter(!is.na(valor_total)) |>
+  dplyr::mutate(
+    dplyr::across(
+      .cols = dplyr::contains("valor"),
+      .fns = ~readr::parse_number(.x, locale = readr::locale(grouping_mark = ".", decimal_mark = ","))
+    )
+  )
 
 usethis::use_data(processos, overwrite = TRUE)
