@@ -146,7 +146,8 @@ processos <- list(
   aux_tempo
 ) |>
   purrr::reduce(dplyr::left_join, by = "id_processo") |>
-  dplyr::select(id_processo, estacao, dt_inicio, status, valor_total, valor_mensal, tempo_contrato, fases)
+  dplyr::select(id_processo, estacao, dt_inicio, status, valor_total, valor_mensal, tempo_contrato, fases) |>
+  dplyr::filter(!is.na(estacao))
 
 processos |>
   dplyr::select(dplyr::contains("valor")) |>
