@@ -8,7 +8,6 @@ processos_bruto <- fases |>
   dplyr::left_join(contratos) |>
   dplyr::select(id_processo, estacao, fases)
 
-
 # extrair a data de início ------------------------------------------------
 
 path_avl <- "data-raw/pdf/avl"
@@ -63,7 +62,10 @@ aux_status <- processos_bruto |>
     )
   ) |>
   dplyr::ungroup() |>
-  tidyr::nest(.by = c(id_processo, estacao, dt_inicio, status), .key = "fases") |>
+  tidyr::nest(
+    .by = c(id_processo, estacao, dt_inicio, status),
+    .key = "fases"
+  ) |>
   dplyr::mutate(status = ifelse(is.na(estacao), NA_character_, status)) |>
   dplyr::arrange(id_processo)
 
@@ -85,27 +87,14 @@ aux_status |>
   purrr::map(extract_pdf, path = path_valor)
 
 # parse
-rgx_reais <- "\\b(?:\\d{1,3}(?:\\.\\d{3})*,\\d{2}|\\d{1,3},\\d{2})\\b"
+texto_valor <- fs::dir_ls(path_valor) |>
+  purrr::map_chr(~ paste(pdftools::pdf_text(.x), collapse = "\n"))
 
 aux_valores <- tibble::tibble(
   id_processo = fs::dir_ls(path_valor) |>
     stringr::str_extract("[0-9]+"),
-  valor_total = fs::dir_ls(path_valor) |>
-    purrr::map(pdftools::pdf_text) |>
-    purrr::map(~stringr::str_extract_all(.x, stringr::regex("(?<=Para:[\n ]).+", TRUE))) |>
-    purrr::map(~unlist(.x)) |>
-    purrr::map(~purrr::keep(.x, stringr::str_detect(.x, "\\d{1,3}\\.\\d{3},\\d{2}"))) |>
-    purrr::map(~purrr::keep(.x, stringr::str_detect(.x, "total"))) |>
-    purrr::map(~stringr::str_extract(.x, rgx_reais)) |>
-    unlist(),
-  valor_mensal = fs::dir_ls(path_valor) |>
-    purrr::map(pdftools::pdf_text) |>
-    purrr::map(~stringr::str_extract_all(.x, stringr::regex("(?<=Para:[\n ]).+", TRUE))) |>
-    purrr::map(~unlist(.x)) |>
-    purrr::map(~purrr::keep(.x, stringr::str_detect(.x, "\\d{1,3}\\.\\d{3},\\d{2}"))) |>
-    purrr::map(~purrr::keep(.x, stringr::str_detect(.x, "mensal"))) |>
-    purrr::map(~stringr::str_extract(.x, rgx_reais)) |>
-    unlist()
+  valor_total = extrair_valor(texto_valor, "total"),
+  valor_mensal = extrair_valor(texto_valor, "mensal")
 )
 
 
@@ -130,10 +119,12 @@ aux_tempo <- tibble::tibble(
     stringr::str_extract("[0-9]+"),
   tempo_contrato = fs::dir_ls(path_tempo) |>
     purrr::map(pdftools::pdf_text) |>
-    purrr::map(~purrr::keep(.x, stringr::str_detect(.x, "VIGÊNCIA/PRAZOS"))) |>
+    purrr::map(~ purrr::keep(.x, stringr::str_detect(.x, "VIGÊNCIA/PRAZOS"))) |>
     purrr::discard(~ length(.x) == 0) |>
     paste0() |>
-    stringr::str_extract("(?<=O prazo de vigência do presente Contrato de Concessão é de )[0-9]+") |>
+    stringr::str_extract(
+      "(?<=O prazo de vigência do presente Contrato de Concessão é de )[0-9]+"
+    ) |>
     paste0(" anos")
 )
 # processos ---------------------------------------------------------------
@@ -146,7 +137,16 @@ processos <- list(
   aux_tempo
 ) |>
   purrr::reduce(dplyr::left_join, by = "id_processo") |>
-  dplyr::select(id_processo, estacao, dt_inicio, status, valor_total, valor_mensal, tempo_contrato, fases) |>
+  dplyr::select(
+    id_processo,
+    estacao,
+    dt_inicio,
+    status,
+    valor_total,
+    valor_mensal,
+    tempo_contrato,
+    fases
+  ) |>
   dplyr::filter(!is.na(estacao))
 
 processos |>
@@ -155,7 +155,10 @@ processos |>
   dplyr::mutate(
     dplyr::across(
       .cols = dplyr::contains("valor"),
-      .fns = ~readr::parse_number(.x, locale = readr::locale(grouping_mark = ".", decimal_mark = ","))
+      .fns = ~ readr::parse_number(
+        .x,
+        locale = readr::locale(grouping_mark = ".", decimal_mark = ",")
+      )
     )
   )
 

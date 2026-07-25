@@ -2,7 +2,7 @@
 
 load("data/contratos.rda")
 
-path = "data-raw/html/fases"
+path <- "data-raw/html/fases"
 
 contratos |>
   dplyr::pull(id_processo) |>

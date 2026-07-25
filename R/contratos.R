@@ -32,7 +32,7 @@ contrato_parse <- function(file = "data-raw/html/contratos/contratos.html") {
       xml2::xml_find_all("./td[2]") |>
       xml2::xml_text(),
     link_processo = html |>
-      xml2::xml_find_all("./td[3]/a") |>
+      xml2::xml_find_all("./td[4]/a") |>
       xml2::xml_attr("href")
   ) |>
     dplyr::mutate(

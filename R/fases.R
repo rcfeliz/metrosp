@@ -24,13 +24,13 @@ fases_parse <- function(file) {
 
   arquivos <- tibble::tibble(
     id_arq = html |>
-      xml2::xml_find_all("./tr[3]//dl") |>
+      xml2::xml_find_all("./tr[4]//dl") |>
       xml2::xml_text(),
     nome_arq = html |>
-      xml2::xml_find_all("./tr[3]//dl/dt") |>
+      xml2::xml_find_all("./tr[4]//dl/dt") |>
       xml2::xml_text(),
     link_arq = html |>
-      xml2::xml_find_all("./tr[3]//dd/a") |>
+      xml2::xml_find_all("./tr[4]//dd/a") |>
       xml2::xml_attr("href")
   ) |>
     dplyr::mutate(
@@ -49,7 +49,7 @@ fases_parse <- function(file) {
       xml2::xml_find_all("./tr[2]/td") |>
       xml2::xml_text(),
     id_arq =  html |>
-      xml2::xml_find_all("./tr[3]/td") |>
+      xml2::xml_find_all("./tr[4]/td") |>
       xml2::xml_text()
   ) |>
     dplyr::mutate(
